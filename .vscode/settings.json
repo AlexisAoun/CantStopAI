@@ -2,5 +2,8 @@
     "java.project.referencedLibraries": [
         "lib/**/*.jar",
         "StratSupp.jar"
+    ],
+    "java.project.sourcePaths": [
+        "src"
     ]
 }
