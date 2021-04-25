@@ -16,7 +16,7 @@ public class Strat33 implements Strategie {
 
     private double probaSingle[], freq[], weigth[];
     private double probaCouple[][];
-    private double probaDouble[][];
+    private double probaDouble[];
     private double probaTriple[][][];
     private int playCount;
 
@@ -27,7 +27,7 @@ public class Strat33 implements Strategie {
         this.freq = new double[13];
         this.weigth = new double[13];
         this.probaCouple = new double[13][13];
-        this.probaDouble = new double[13][13];
+        this.probaDouble = new double[13];
         this.probaTriple = new double[13][13][13];
 
         computeProba();
@@ -48,14 +48,15 @@ public class Strat33 implements Strategie {
                             int occurences = computeOccurences(sumD, i);
 
                             this.freq[i] += occurences;
+                            if (isCoupleInSum(sumD, i, i))
+                                this.probaDouble[i]++;
+
                             if (occurences > 0)
                                 this.probaSingle[i]++;
 
                             for (int j = i + 1; j <= 12; j++) {
                                 if (isCoupleInSum(sumD, i, j))
                                     this.probaCouple[i][j]++;
-                                if (isOneOfTwoInSum(sumD, i, j))
-                                    this.probaDouble[i][j]++;
 
                                 for (int k = j + 1; k <= 12; k++) {
                                     if (isOneOfThreeInSum(sumD, i, j, k))
@@ -77,11 +78,11 @@ public class Strat33 implements Strategie {
             this.weigth[i] = 1 / this.freq[i];
 
             this.probaSingle[i] /= nbTotalIssues;
+            this.probaDouble[i] /= nbTotalIssues;
 
             for (int j = i + 1; j <= 12; j++) {
 
                 this.probaCouple[i][j] /= nbTotalIssues;
-                this.probaDouble[i][j] /= nbTotalIssues;
 
                 for (int k = j + 1; k <= 12; k++)
                     this.probaTriple[i][j][k] /= nbTotalIssues;
@@ -189,13 +190,12 @@ public class Strat33 implements Strategie {
             if (casesRestantesAdvC2 * weigth[choix[i][1]] - casesRestantesC2 * weigth[choix[i][1]] > 5)
                 probaColonne2 /= 2;
 
-
             score = (probaColonne1 + probaColonne2) * 10;
 
             if (this.debug) {
                 System.out.println("Choix Actuel i = " + i + " proba colonne " + choix[i][0] + " = " + probaColonne1
                         + " proba colonne " + choix[i][1] + " = " + probaColonne2);
-                System.out.println("Score du choix = "+score+" scoreMax = "+scoreMax);
+                System.out.println("Score du choix = " + score + " scoreMax = " + scoreMax);
             }
 
             if (score >= scoreMax) {
@@ -221,7 +221,100 @@ public class Strat33 implements Strategie {
      * @return toujours vrai (pour s'arrêter)
      */
     public boolean stop(Jeu j) {
-        return true;
+
+        boolean[] colonnesBloquees = j.getBloque();
+        for (int i = 0; i < colonnesBloquees.length; i++) {
+            if (colonnesBloquees[i])
+                return true;
+        }
+
+        if (j.getBonzesRestants() != 0)
+            return false;
+
+        boolean output = true;
+
+        double esperance = 0;
+        double progresActuelle = 0;
+
+        int[] avancementToutesLesColonnes = j.avancementJoueurEnCours();
+        int[][] avancement = new int[3][2];
+
+        int compteur = 0;
+
+        for (int i = 0; i < avancementToutesLesColonnes.length; i++) {
+            if (avancementToutesLesColonnes[i] > 0) {
+                avancement[compteur][0] = avancementToutesLesColonnes[i];
+                avancement[compteur][1] = i + 2;
+                compteur++;
+            }
+        }
+        progresActuelle = avancement[0][0] * weigth[avancement[0][1]] + avancement[1][0] * weigth[avancement[1][1]]
+                + avancement[2][0] * weigth[avancement[2][1]];
+
+        esperance = 
+                
+                this.probaSingle[avancement[0][1]]
+                * ((avancement[0][0] + 1) * weigth[avancement[0][1]] + avancement[1][0] * weigth[avancement[1][1]]
+                        + avancement[2][0] * weigth[avancement[2][1]])
+
+                +
+
+                this.probaSingle[avancement[1][1]] * (avancement[0][0] * weigth[avancement[0][1]]
+                        + (avancement[1][0] + 1) * weigth[avancement[1][1]]
+                        + avancement[2][0] * weigth[avancement[2][1]])
+
+                +
+
+                this.probaSingle[avancement[2][1]]
+                        * (avancement[0][0] * weigth[avancement[0][1]] + avancement[1][0] * weigth[avancement[1][1]]
+                                + (avancement[2][0] + 1) * weigth[avancement[2][1]])
+
+                +
+
+                this.probaCouple[avancement[0][1]][avancement[1][1]]
+                        * ((avancement[0][0] + 1) * weigth[avancement[0][1]]
+                                + (avancement[1][0] + 1) * weigth[avancement[1][1]]
+                                + avancement[2][0] * weigth[avancement[2][1]])
+                +
+
+                this.probaCouple[avancement[0][1]][avancement[2][1]]
+                        * ((avancement[0][0] + 1) * weigth[avancement[0][1]]
+                                + avancement[1][0] * weigth[avancement[1][1]]
+                                + (avancement[2][0] + 1) * weigth[avancement[2][1]])
+                +
+
+                this.probaCouple[avancement[1][1]][avancement[3][1]] * (avancement[0][0] * weigth[avancement[0][1]]
+                        + (avancement[1][0] + 1) * weigth[avancement[1][1]]
+                        + (avancement[2][0] + 1) * weigth[avancement[2][1]])
+
+                +
+
+                this.probaDouble[avancement[0][1]] * ((avancement[0][0]+2) * weigth[avancement[0][1]]
+                        + avancement[1][0] * weigth[avancement[1][1]]
+                        + avancement[2][0] * weigth[avancement[2][1]])
+
+                +
+
+                this.probaDouble[avancement[1][1]] * (avancement[0][0] * weigth[avancement[0][1]]
+                        + (avancement[1][0] + 2) * weigth[avancement[1][1]]
+                        + avancement[2][0] * weigth[avancement[2][1]])
+
+                +
+
+                this.probaDouble[avancement[2][1]] * (avancement[0][0] * weigth[avancement[0][1]]
+                        + avancement[1][0] * weigth[avancement[1][1]]
+                        + (avancement[2][0]+2) * weigth[avancement[2][1]]);
+
+        if(esperance>progresActuelle)
+            output  = false;
+
+        if(this.debug){
+            System.out.println("----------------------- Debug Stop --------------------------");
+            System.out.println("esprance = "+esperance+" progresActuelle = "+progresActuelle+" diff = "+(esperance-progresActuelle));
+            System.out.println("Stop ? : = "+output);
+        } 
+        return output;
+
     }
 
     /**
