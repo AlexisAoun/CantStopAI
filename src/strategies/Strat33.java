@@ -19,7 +19,9 @@ public class Strat33 implements Strategie {
     private double probaDouble[];
     private double probaTriple[][][];
 
-    private boolean debug = true;
+    private double coefEsperance = 9.0;
+
+    private boolean debug = false;
 
     public Strat33() {
         this.probaSingle = new double[13];
@@ -183,15 +185,15 @@ public class Strat33 implements Strategie {
                 int casesRestantesAdvC2 = nbCases[choix[i][1] - 2] - avancementAdverse[choix[i][1] - 2];
                 int casesRestantesC2 = nbCases[choix[i][1] - 2] - avancementActuel[choix[i][1] - 2];
 
-                if (casesRestantesAdvC2 * weigth[choix[i][1]] - casesRestantesC2 * weigth[choix[i][1]] > 5)
-                    probaColonne2 /= 2;
+                if (casesRestantesAdvC2 * weigth[choix[i][1]] - casesRestantesC2 * weigth[choix[i][1]] > 10)
+                    probaColonne2 /= 1.5;
             }
 
             int casesRestantesAdvC1 = nbCases[choix[i][0] - 2] - avancementAdverse[choix[i][0] - 2];
             int casesRestantesC1 = nbCases[choix[i][0] - 2] - avancementActuel[choix[i][0] - 2];
 
-            if (casesRestantesAdvC1 * weigth[choix[i][0]] - casesRestantesC1 * weigth[choix[i][0]] > 5)
-                probaColonne1 /= 2;
+            if (casesRestantesAdvC1 * weigth[choix[i][0]] - casesRestantesC1 * weigth[choix[i][0]] > 10)
+                probaColonne1 /= 1.5;
 
             score = (probaColonne1 + probaColonne2) * 1000;
 
@@ -260,7 +262,6 @@ public class Strat33 implements Strategie {
         double esperance = 0;
         double progresActuelle = 0;
 
-        //int[] avancementToutesLesColonnes = avancementActuel(j.avancementJoueurEnCours(), j.getBonzes());
         int[][] bonzes = j.getBonzes();
         double[][] avancement = new double[3][2];
 
@@ -268,15 +269,6 @@ public class Strat33 implements Strategie {
             for(int k = 0; k<2; k++)
                 avancement[i][k] = (double)bonzes[i][k];
         }
-        //int compteur = 0;
-
-        //for (int i = 0; i < avancementToutesLesColonnes.length; i++) {
-        //    if (avancementToutesLesColonnes[i] > 0) {
-        //        avancement[compteur][0] = avancementToutesLesColonnes[i];
-        //        avancement[compteur][1] = i + 2;
-        //        compteur++;
-        //    }
-        //}
 
         if (this.debug) {
             System.out.println("----------------------- Debug Stop --------------------------");
@@ -341,12 +333,12 @@ public class Strat33 implements Strategie {
                                 + avancement[1][0] * weigth[bonzes[1][1]]
                                 + (avancement[2][0] + 2) * weigth[bonzes[2][1]]);
 
-        if (esperance >= progresActuelle/4)
+        if (esperance >= progresActuelle/coefEsperance)
             output = false;
 
         if (this.debug) {
-            System.out.println("esprance = " + esperance + " progresActuelle = " + progresActuelle + " diff = "
-                    + (esperance - progresActuelle));
+            System.out.println("esprance = " + esperance + " progresActuelle = " + progresActuelle/coefEsperance + " diff = "
+                    + (esperance - progresActuelle/coefEsperance));
             System.out.println("Stop ? : = " + output);
             System.out.println("-------------------------------------------------------------------");
         }
